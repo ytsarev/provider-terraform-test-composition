@@ -1,0 +1,13 @@
+apiVersion: tf.gedservices.orchestrator.predix.io/v1
+kind: V1iamroleinstance
+metadata:
+  namespace: "user-1"
+  name: iam-role-demo-001
+spec:
+  forProvider:
+    iamRole: "power-user-iaas-demo-role-001"
+    assumeRoleArn: "arn:aws:iam::***"
+  parameters:
+    path: "/test/"
+  writeConnectionSecretToRef:
+    name: iam-role-demo-001-secret

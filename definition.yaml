@@ -1,0 +1,43 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xv1iamroleinstances.tf.gedservices.orchestrator.predix.io
+spec:
+  group: tf.gedservices.orchestrator.predix.io
+  names:
+    kind: XV1iamroleinstance
+    plural: xv1iamroleinstances
+  claimNames:
+    kind: V1iamroleinstance
+    plural: v1iamroleinstances
+  versions:
+    - name: v1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                forProvider:
+                  type: object
+                  properties:
+                    iamRole:
+                      type: string
+                    assumeRoleArn:
+                      type: string
+                  required:
+                  - iamRole
+                  - assumeRoleArn
+                parameters:
+                  type: object
+                  properties:
+                    path:
+                      type: string
+                  required:
+                  - path
+              required:
+              - forProvider
+              - parameters

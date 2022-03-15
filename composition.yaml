@@ -1,0 +1,92 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: iamrole
+  labels:
+    crossplane.io/xrd: xv1iamroleinstances.tf.gedservices.orchestrator.predix.io
+    provider: provider-terraform  # this is the name of the terraform provider name.
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: tf.gedservices.orchestrator.predix.io/v1
+    kind: XV1iamroleinstance
+  resources:
+    - name: awsIAMRole
+      base:
+        apiVersion: tf.crossplane.io/v1alpha1
+        kind: Workspace
+        spec:
+          forProvider:
+            module: git::https://github.com/ytsarev/provider-terraform-test-module.git//iam?ref=main
+            source: Remote
+            vars:
+              - key: iamRole
+          writeConnectionSecretToRef:
+            namespace: "crossplane-system"
+      connectionDetails:
+        - fromConnectionSecretKey: iam_role_arn
+          name: iam_role_arn
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath:  spec.forProvider.iamRole
+          toFieldPath: "spec.forProvider.vars[0].value"
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-secret"
+    - name: crossplane-iamuser
+      base:
+        apiVersion: iam.aws.crossplane.io/v1beta1
+        kind: User
+        spec:
+          forProvider:
+            path:
+      patches:
+        - fromFieldPath: "spec.parameters.path"
+          toFieldPath: "spec.forProvider.path"
+    - name: crossplane-iamaccessKey-1
+      base:
+        apiVersion: iam.aws.crossplane.io/v1beta1
+        kind: AccessKey
+        spec:
+          forProvider:
+            userNameSelector:
+              matchControllerRef: true
+          writeConnectionSecretToRef:
+            namespace: crossplane-system
+      patches:
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-iamaccesskey-1"
+      connectionDetails:
+        - fromConnectionSecretKey: username
+          name: username-1
+        - fromConnectionSecretKey: password
+          name: password-1
+    - name: crossplane-iamaccessKey-2
+      base:
+        apiVersion: iam.aws.crossplane.io/v1beta1
+        kind: AccessKey
+        spec:
+          forProvider:
+            userNameSelector:
+              matchControllerRef: true
+          writeConnectionSecretToRef:
+            namespace: crossplane-system
+      patches:
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-iamaccesskey-2"
+      connectionDetails:
+        - fromConnectionSecretKey: username
+          name: username-2
+        - fromConnectionSecretKey: password
+          name: password-2
